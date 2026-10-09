@@ -1,0 +1,220 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isDeveloper() {
+      return isSignedIn() &&
+             request.auth.token.email == 'bhawareraj852@gmail.com' &&
+             request.auth.token.email_verified == true;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 1. User Profiles
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().username is string && incoming().username.size() >= 2 && incoming().username.size() <= 35 &&
+                       incoming().displayName is string && incoming().displayName.size() >= 1 && incoming().displayName.size() <= 60 &&
+                       (!('isDeveloper' in incoming()) || incoming().isDeveloper == false || isDeveloper()) &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time;
+      allow update: if isSignedIn() &&
+                       (
+                         (request.auth.uid == userId &&
+                          incoming().userId == existing().userId &&
+                          incoming().createdAt == existing().createdAt &&
+                          (!('isDeveloper' in incoming()) || incoming().isDeveloper == existing().isDeveloper || isDeveloper())) ||
+                         isDeveloper()
+                       );
+      allow delete: if isSignedIn() && (request.auth.uid == userId || isDeveloper());
+    }
+
+    // 2. Friendships
+    match /friends/{friendshipId} {
+      allow get, list: if isSignedIn() && (
+        resource.data.requesterId == request.auth.uid ||
+        resource.data.receiverId == request.auth.uid ||
+        isDeveloper()
+      );
+      allow create: if isSignedIn() &&
+                       incoming().requesterId == request.auth.uid &&
+                       incoming().status in ['pending', 'accepted', 'rejected'] &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time;
+      allow update: if isSignedIn() && (
+        (resource.data.receiverId == request.auth.uid || resource.data.requesterId == request.auth.uid) ||
+        isDeveloper()
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.requesterId == request.auth.uid ||
+        resource.data.receiverId == request.auth.uid ||
+        isDeveloper()
+      );
+    }
+
+    // 3. Conversations (Reported chats accessible to developer)
+    match /conversations/{conversationId} {
+      allow get, list: if isSignedIn() && (
+        request.auth.uid in resource.data.participantIds ||
+        (isDeveloper() && resource.data.isReported == true)
+      );
+      allow create: if isSignedIn() &&
+                       request.auth.uid in incoming().participantIds &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time;
+      allow update: if isSignedIn() && (
+        request.auth.uid in resource.data.participantIds ||
+        (isDeveloper() && resource.data.isReported == true)
+      );
+      allow delete: if isSignedIn() && (
+        request.auth.uid in resource.data.participantIds ||
+        isDeveloper()
+      );
+
+      // Messages subcollection
+      match /messages/{messageId} {
+        allow get, list: if isSignedIn() && (
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds ||
+          (isDeveloper() && get(/databases/$(database)/documents/conversations/$(conversationId)).data.isReported == true)
+        );
+        allow create: if isSignedIn() &&
+                         request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds &&
+                         incoming().senderId == request.auth.uid &&
+                         incoming().text is string && incoming().text.size() > 0 && incoming().text.size() <= 2000 &&
+                         incoming().createdAt is timestamp && incoming().createdAt <= request.time;
+        allow update, delete: if isSignedIn() && (
+          resource.data.senderId == request.auth.uid ||
+          isDeveloper()
+        );
+      }
+    }
+
+    // 4. Rooms
+    match /rooms/{roomId} {
+      allow get, list: if isSignedIn() && (
+        resource.data.isPrivate == false ||
+        resource.data.hostId == request.auth.uid ||
+        request.auth.uid in resource.data.allowedMemberIds ||
+        isDeveloper()
+      );
+      allow create: if isSignedIn() &&
+                       incoming().hostId == request.auth.uid &&
+                       incoming().title is string && incoming().title.size() >= 2 && incoming().title.size() <= 100 &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time;
+      allow update: if isSignedIn() && (
+        resource.data.hostId == request.auth.uid ||
+        request.auth.uid in resource.data.allowedMemberIds ||
+        incoming().diff(existing()).affectedKeys().hasOnly(['participantCount']) ||
+        isDeveloper()
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.hostId == request.auth.uid ||
+        isDeveloper()
+      );
+    }
+
+    // 5. Posts & Reels
+    match /posts/{postId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() &&
+                       incoming().authorId == request.auth.uid &&
+                       incoming().content is string && incoming().content.size() <= 3000 &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time;
+      allow update: if isSignedIn() && (
+        resource.data.authorId == request.auth.uid ||
+        incoming().diff(existing()).affectedKeys().hasOnly(['likesCount', 'commentsCount', 'sharesCount', 'savesCount', 'updatedAt']) ||
+        isDeveloper()
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.authorId == request.auth.uid ||
+        isDeveloper()
+      );
+
+      // Comments subcollection
+      match /comments/{commentId} {
+        allow get, list: if isSignedIn();
+        allow create: if isSignedIn() &&
+                         incoming().authorId == request.auth.uid &&
+                         incoming().text is string && incoming().text.size() > 0 && incoming().text.size() <= 1000 &&
+                         incoming().createdAt is timestamp && incoming().createdAt <= request.time;
+        allow update, delete: if isSignedIn() && (
+          resource.data.authorId == request.auth.uid ||
+          isDeveloper()
+        );
+      }
+    }
+
+    // 6. Likes
+    match /likes/{likeId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time;
+      allow delete: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isDeveloper()
+      );
+    }
+
+    // 7. Reports
+    match /reports/{reportId} {
+      allow get, list: if isSignedIn() && (
+        resource.data.reporterId == request.auth.uid ||
+        isDeveloper()
+      );
+      allow create: if isSignedIn() &&
+                       incoming().reporterId == request.auth.uid &&
+                       incoming().reason is string &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time;
+      allow update, delete: if isDeveloper();
+    }
+
+    // 8. Blocks
+    match /blocks/{blockId} {
+      allow get, list: if isSignedIn() && resource.data.blockerId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().blockerId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.blockerId == request.auth.uid;
+    }
+
+    // 9. Developer Audit Logs
+    match /audit_logs/{logId} {
+      allow get, list: if isDeveloper();
+      allow create: if isDeveloper() &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time;
+      allow update, delete: if false; // immutable audit log
+    }
+
+    // 10. Announcements
+    match /announcements/{announcementId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isDeveloper();
+    }
+
+    // 11. App Settings
+    match /app_settings/{settingId} {
+      allow get: if isSignedIn();
+      allow list: if isDeveloper();
+      allow create, update, delete: if isDeveloper();
+    }
+  }
+}

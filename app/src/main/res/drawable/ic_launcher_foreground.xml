@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:pivotX="54"
+        android:pivotY="54">
+        <!-- Left person node -->
+        <path
+            android:fillColor="#F43F5E"
+            android:pathData="M40,38 C43.3,38 46,35.3 46,32 C46,28.7 43.3,26 40,26 C36.7,26 34,28.7 34,32 C34,35.3 36.7,38 40,38 Z" />
+        <!-- Right person node -->
+        <path
+            android:fillColor="#38BDF8"
+            android:pathData="M68,38 C71.3,38 74,35.3 74,32 C74,28.7 71.3,26 68,26 C64.7,26 62,28.7 62,32 C62,35.3 64.7,38 68,38 Z" />
+        <!-- Center connection spark -->
+        <path
+            android:fillColor="#FBBF24"
+            android:pathData="M54,34 L56,40 L62,42 L56,44 L54,50 L52,44 L46,42 L52,40 Z" />
+        <!-- Intertwined friendship loop -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="5"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M38,48 C32,48 28,53 28,60 C28,68 36,75 54,82 C72,75 80,68 80,60 C80,53 76,48 70,48 C62,48 57,55 54,60 C51,55 46,48 38,48 Z" />
+        <!-- Inner glow accent -->
+        <path
+            android:fillColor="#EC4899"
+            android:pathData="M54,64 C52,61 48,56 42,56 C38,56 35,59 35,63 C35,68 41,73 54,78 C67,73 73,68 73,63 C73,59 70,56 66,56 C60,56 56,61 54,64 Z" />
+    </group>
+</vector>

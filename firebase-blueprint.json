@@ -1,0 +1,263 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "username": { "type": "string" },
+        "displayName": { "type": "string" },
+        "bio": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "isPrivate": { "type": "boolean" },
+        "locationSharingEnabled": { "type": "boolean" },
+        "approxCity": { "type": "string" },
+        "language": { "type": "string" },
+        "isDataSaver": { "type": "boolean" },
+        "isDeveloper": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "username", "displayName", "createdAt"]
+    },
+    "Friendship": {
+      "title": "Friendship",
+      "description": "Friend requests and accepted friendships",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "requesterId": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "requesterId", "receiverId", "status", "createdAt"]
+    },
+    "Conversation": {
+      "title": "Conversation",
+      "description": "Direct chat conversation between friends",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "participantIds": { "type": "array" },
+        "lastMessage": { "type": "string" },
+        "lastMessageSenderId": { "type": "string" },
+        "isReported": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "participantIds", "createdAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Chat message inside a conversation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "conversationId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "conversationId", "senderId", "text", "createdAt"]
+    },
+    "Room": {
+      "title": "Room",
+      "description": "Public or private audio/video/text room",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "hostId": { "type": "string" },
+        "hostName": { "type": "string" },
+        "roomType": { "type": "string", "enum": ["text", "audio", "video"] },
+        "isPrivate": { "type": "boolean" },
+        "allowedMemberIds": { "type": "array" },
+        "participantCount": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "hostId", "roomType", "isPrivate", "createdAt"]
+    },
+    "Post": {
+      "title": "Post",
+      "description": "Community post or short video / reel",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorAvatar": { "type": "string" },
+        "content": { "type": "string" },
+        "mediaUrl": { "type": "string" },
+        "mediaType": { "type": "string", "enum": ["text", "image", "video"] },
+        "isReel": { "type": "boolean" },
+        "likesCount": { "type": "integer" },
+        "commentsCount": { "type": "integer" },
+        "sharesCount": { "type": "integer" },
+        "savesCount": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "authorId", "authorName", "content", "isReel", "createdAt"]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "Comment on a post",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "postId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorAvatar": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "postId", "authorId", "authorName", "text", "createdAt"]
+    },
+    "Like": {
+      "title": "Like",
+      "description": "Like on a post or reel",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "postId": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "postId", "userId", "createdAt"]
+    },
+    "Report": {
+      "title": "Report",
+      "description": "Safety report submitted by a user for moderation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "reporterId": { "type": "string" },
+        "reporterEmail": { "type": "string" },
+        "targetType": { "type": "string", "enum": ["post", "reel", "user", "room", "chat"] },
+        "targetId": { "type": "string" },
+        "reportedUserId": { "type": "string" },
+        "conversationId": { "type": "string" },
+        "reason": { "type": "string" },
+        "details": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "reviewed", "resolved", "dismissed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "reporterId", "targetType", "targetId", "reason", "status", "createdAt"]
+    },
+    "Block": {
+      "title": "Block",
+      "description": "User block record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "blockerId": { "type": "string" },
+        "blockedUserId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "blockerId", "blockedUserId", "createdAt"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Developer and moderation audit log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "developerEmail": { "type": "string" },
+        "action": { "type": "string" },
+        "targetId": { "type": "string" },
+        "details": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "developerEmail", "action", "createdAt"]
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "System or community announcement",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "priority": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "content", "createdAt"]
+    },
+    "AppSettings": {
+      "title": "AppSettings",
+      "description": "Application configuration and developer security settings",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "developerPinHash": { "type": "string" },
+        "maintenanceMode": { "type": "boolean" },
+        "minAppVersion": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile collection"
+    },
+    "/friends/{friendshipId}": {
+      "schema": "Friendship",
+      "description": "Friendships and friend requests"
+    },
+    "/conversations/{conversationId}": {
+      "schema": "Conversation",
+      "description": "Direct messaging conversations"
+    },
+    "/conversations/{conversationId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Messages inside conversation"
+    },
+    "/rooms/{roomId}": {
+      "schema": "Room",
+      "description": "Community audio, video and text rooms"
+    },
+    "/posts/{postId}": {
+      "schema": "Post",
+      "description": "Posts and reels collection"
+    },
+    "/posts/{postId}/comments/{commentId}": {
+      "schema": "Comment",
+      "description": "Comments on posts"
+    },
+    "/likes/{likeId}": {
+      "schema": "Like",
+      "description": "Post likes"
+    },
+    "/reports/{reportId}": {
+      "schema": "Report",
+      "description": "User reports for moderation"
+    },
+    "/blocks/{blockId}": {
+      "schema": "Block",
+      "description": "User block records"
+    },
+    "/audit_logs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Developer activity audit logs"
+    },
+    "/announcements/{announcementId}": {
+      "schema": "Announcement",
+      "description": "Community announcements"
+    },
+    "/app_settings/{settingId}": {
+      "schema": "AppSettings",
+      "description": "App settings and developer security config"
+    }
+  }
+}
